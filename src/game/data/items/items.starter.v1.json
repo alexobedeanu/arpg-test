@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "rarities": {
+    "common": {"displayName": "Common", "color": "#c8c8c8"},
+    "magic": {"displayName": "Magic", "color": "#4aa3ff"},
+    "rare": {"displayName": "Rare", "color": "#ffd24a"}
+  },
+  "itemTags": {
+    "weapon": {"description": "Can roll weapon affixes"},
+    "armor": {"description": "Can roll armor affixes"},
+    "consumable": {"description": "Used from inventory"},
+    "sword": {"description": "One-handed sword"},
+    "axe": {"description": "One-handed axe"},
+    "bow": {"description": "Two-handed bow"},
+    "wand": {"description": "One-handed wand"},
+    "shield": {"description": "Offhand shield"},
+    "robe": {"description": "Cloth chest"},
+    "boots": {"description": "Footwear"},
+    "leather": {"description": "Light armor"}
+  },
+  "items": [
+    {
+      "id": "itm_rusty_sword",
+      "name": "Rusty Sword",
+      "slot": "mainHand",
+      "tags": ["weapon", "sword"],
+      "levelReq": 1,
+      "baseStats": {"damageMin": 2, "damageMax": 4, "attackSpeed": 1.1},
+      "affixPoolId": "pool_weapon_starter",
+      "stackMax": 1,
+      "value": 10
+    },
+    {
+      "id": "itm_worn_axe",
+      "name": "Worn Axe",
+      "slot": "mainHand",
+      "tags": ["weapon", "axe"],
+      "levelReq": 1,
+      "baseStats": {"damageMin": 3, "damageMax": 5, "attackSpeed": 1.0},
+      "affixPoolId": "pool_weapon_starter",
+      "stackMax": 1,
+      "value": 10
+    },
+    {
+      "id": "itm_simple_bow",
+      "name": "Simple Bow",
+      "slot": "twoHand",
+      "tags": ["weapon", "bow"],
+      "levelReq": 1,
+      "baseStats": {"damageMin": 2, "damageMax": 6, "attackSpeed": 0.95},
+      "affixPoolId": "pool_weapon_starter",
+      "stackMax": 1,
+      "value": 12
+    },
+    {
+      "id": "itm_apprentice_wand",
+      "name": "Apprentice Wand",
+      "slot": "mainHand",
+      "tags": ["weapon", "wand"],
+      "levelReq": 1,
+      "baseStats": {"damageMin": 1, "damageMax": 3, "attackSpeed": 1.2},
+      "implicitStats": {"castSpeedPct": 2},
+      "affixPoolId": "pool_caster_starter",
+      "stackMax": 1,
+      "value": 12
+    },
+    {
+      "id": "itm_iron_buckler",
+      "name": "Iron Buckler",
+      "slot": "offHand",
+      "tags": ["armor", "shield"],
+      "levelReq": 1,
+      "baseStats": {"armor": 6},
+      "affixPoolId": "pool_armor_starter",
+      "stackMax": 1,
+      "value": 10
+    },
+    {
+      "id": "itm_tattered_robe",
+      "name": "Tattered Robe",
+      "slot": "chest",
+      "tags": ["armor", "robe"],
+      "levelReq": 1,
+      "baseStats": {"armor": 2, "evasion": 2},
+      "affixPoolId": "pool_armor_starter",
+      "stackMax": 1,
+      "value": 8
+    },
+    {
+      "id": "itm_leather_vest",
+      "name": "Leather Vest",
+      "slot": "chest",
+      "tags": ["armor", "leather"],
+      "levelReq": 1,
+      "baseStats": {"armor": 3, "evasion": 4},
+      "affixPoolId": "pool_armor_starter",
+      "stackMax": 1,
+      "value": 9
+    },
+    {
+      "id": "itm_travelers_boots",
+      "name": "Traveler's Boots",
+      "slot": "feet",
+      "tags": ["armor", "boots"],
+      "levelReq": 1,
+      "baseStats": {"armor": 1, "evasion": 3},
+      "implicitStats": {"moveSpeedPct": 2},
+      "affixPoolId": "pool_armor_starter",
+      "stackMax": 1,
+      "value": 9
+    },
+    {
+      "id": "itm_minor_health_potion",
+      "name": "Minor Health Potion",
+      "slot": "consumable",
+      "tags": ["consumable"],
+      "levelReq": 1,
+      "stackMax": 10,
+      "value": 3,
+      "use": {
+        "type": "heal",
+        "amount": 25,
+        "cooldownMs": 4000
+      }
+    },
+    {
+      "id": "itm_minor_mana_potion",
+      "name": "Minor Mana Potion",
+      "slot": "consumable",
+      "tags": ["consumable"],
+      "levelReq": 1,
+      "stackMax": 10,
+      "value": 3,
+      "use": {
+        "type": "mana",
+        "amount": 20,
+        "cooldownMs": 4000
+      }
+    }
+  ]
+}

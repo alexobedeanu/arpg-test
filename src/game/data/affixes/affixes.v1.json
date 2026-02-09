@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "statKeys": {
+    "damageMin": {"description": "Adds flat minimum weapon damage", "stacking": "add"},
+    "damageMax": {"description": "Adds flat maximum weapon damage", "stacking": "add"},
+    "attackSpeedPct": {"description": "% increased attack speed", "stacking": "add"},
+    "castSpeedPct": {"description": "% increased cast speed", "stacking": "add"},
+    "critChancePct": {"description": "% increased critical strike chance", "stacking": "add"},
+    "moveSpeedPct": {"description": "% increased movement speed", "stacking": "add"},
+    "maxHealth": {"description": "Adds flat maximum health", "stacking": "add"},
+    "maxMana": {"description": "Adds flat maximum mana", "stacking": "add"},
+    "armor": {"description": "Adds flat armor", "stacking": "add"},
+    "evasion": {"description": "Adds flat evasion", "stacking": "add"},
+    "fireDamageMin": {"description": "Adds flat minimum fire damage", "stacking": "add"},
+    "fireDamageMax": {"description": "Adds flat maximum fire damage", "stacking": "add"}
+  },
+  "affixes": [
+    {
+      "id": "pre_sharp",
+      "name": "Sharp",
+      "slot": "prefix",
+      "allowedItemTags": ["weapon"],
+      "tiers": [
+        {"tier": 1, "minLevel": 1, "stats": {"damageMin": 1, "damageMax": 2}},
+        {"tier": 2, "minLevel": 5, "stats": {"damageMin": 2, "damageMax": 4}}
+      ]
+    },
+    {
+      "id": "suf_quick",
+      "name": "of Quickness",
+      "slot": "suffix",
+      "allowedItemTags": ["weapon"],
+      "tiers": [
+        {"tier": 1, "minLevel": 1, "stats": {"attackSpeedPct": 3}},
+        {"tier": 2, "minLevel": 8, "stats": {"attackSpeedPct": 6}}
+      ]
+    },
+    {
+      "id": "pre_stalwart",
+      "name": "Stalwart",
+      "slot": "prefix",
+      "allowedItemTags": ["armor"],
+      "tiers": [
+        {"tier": 1, "minLevel": 1, "stats": {"armor": 3}},
+        {"tier": 2, "minLevel": 7, "stats": {"armor": 7}}
+      ]
+    },
+    {
+      "id": "suf_vitality",
+      "name": "of Vitality",
+      "slot": "suffix",
+      "allowedItemTags": ["armor"],
+      "tiers": [
+        {"tier": 1, "minLevel": 1, "stats": {"maxHealth": 5}},
+        {"tier": 2, "minLevel": 10, "stats": {"maxHealth": 12}}
+      ]
+    },
+    {
+      "id": "pre_scholar",
+      "name": "Scholar's",
+      "slot": "prefix",
+      "allowedItemTags": ["focus", "staff", "wand"],
+      "tiers": [
+        {"tier": 1, "minLevel": 1, "stats": {"maxMana": 6}},
+        {"tier": 2, "minLevel": 9, "stats": {"maxMana": 14}}
+      ]
+    },
+    {
+      "id": "suf_flames",
+      "name": "of Embers",
+      "slot": "suffix",
+      "allowedItemTags": ["weapon"],
+      "tiers": [
+        {"tier": 1, "minLevel": 3, "stats": {"fireDamageMin": 1, "fireDamageMax": 2}},
+        {"tier": 2, "minLevel": 12, "stats": {"fireDamageMin": 2, "fireDamageMax": 4}}
+      ]
+    }
+  ],
+  "affixPools": [
+    {
+      "id": "pool_weapon_starter",
+      "description": "Starter weapon pool: small, readable, early-game",
+      "rules": {
+        "maxPrefixes": 1,
+        "maxSuffixes": 1,
+        "noDuplicateAffixIds": true
+      },
+      "affixIds": ["pre_sharp", "suf_quick", "suf_flames"]
+    },
+    {
+      "id": "pool_armor_starter",
+      "description": "Starter armor pool",
+      "rules": {
+        "maxPrefixes": 1,
+        "maxSuffixes": 1,
+        "noDuplicateAffixIds": true
+      },
+      "affixIds": ["pre_stalwart", "suf_vitality"]
+    },
+    {
+      "id": "pool_caster_starter",
+      "description": "Starter caster weapon pool",
+      "rules": {
+        "maxPrefixes": 1,
+        "maxSuffixes": 1,
+        "noDuplicateAffixIds": true
+      },
+      "affixIds": ["pre_scholar", "suf_quick", "suf_flames"]
+    }
+  ]
+}
