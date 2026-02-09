@@ -347,25 +347,57 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateEnemyAI(): void {
-    const enemies = this.enemies.getChildren() as Enemy[];
+    const enemies = (this.enemies.getChildren() as Enemy[]).filter((e) => e.active);
 
-    for (const e of enemies) {
-      if (!e.active) continue;
+    // Simple pressure control: only N enemies actively chase at once.
+    const chaseSlots = 6;
+
+    enemies.sort((a, b) => {
+      const da = Phaser.Math.Distance.Squared(a.x, a.y, this.player.x, this.player.y);
+      const db = Phaser.Math.Distance.Squared(b.x, b.y, this.player.x, this.player.y);
+      return da - db;
+    });
+
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
       const body = e.body as Phaser.Physics.Arcade.Body;
 
-      const dist = Phaser.Math.Distance.Between(e.x, e.y, this.player.x, this.player.y);
-      if (dist > 520) {
-        // idle drift
+      const distSq = Phaser.Math.Distance.Squared(e.x, e.y, this.player.x, this.player.y);
+      const activeRadiusSq = 520 * 520;
+      if (distSq > activeRadiusSq) {
         body.setAcceleration(0, 0);
         continue;
       }
 
-      const dir = new Phaser.Math.Vector2(this.player.x - e.x, this.player.y - e.y);
-      if (dir.lengthSq() < 0.0001) continue;
-      dir.normalize();
+      if (i >= chaseSlots) {
+        // Orbit instead of bee-line
+        const toPlayerX = this.player.x - e.x;
+        const toPlayerY = this.player.y - e.y;
+        const len = Math.hypot(toPlayerX, toPlayerY);
+        if (len < 0.001) continue;
+
+        const nx = toPlayerX / len;
+        const ny = toPlayerY / len;
+        // perpendicular (orbit)
+        const ox = -ny;
+        const oy = nx;
+
+        const accel = e.speed * 5;
+        body.setAcceleration(ox * accel, oy * accel);
+        continue;
+      }
+
+      // Chase
+      const dx = this.player.x - e.x;
+      const dy = this.player.y - e.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 0.001) continue;
+
+      const nx = dx / len;
+      const ny = dy / len;
 
       const accel = e.speed * 7;
-      body.setAcceleration(dir.x * accel, dir.y * accel);
+      body.setAcceleration(nx * accel, ny * accel);
     }
   }
 
