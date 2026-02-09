@@ -7,6 +7,7 @@ import { Hud } from '../ui/Hud';
 import { ensureTextures } from '../assets/generateTextures';
 import { createProceduralTilemap } from '../world/tilemap';
 import { pickWeighted } from '../systems/loot';
+import { SpawnDirector } from '../spawning/SpawnDirector';
 
 import classesData from '../data/classes/classes.v1.json';
 import itemsData from '../data/items/items.starter.v1.json';
@@ -46,6 +47,8 @@ export class GameScene extends Phaser.Scene {
   private enemies!: Phaser.Physics.Arcade.Group;
   private loots!: Phaser.Physics.Arcade.Group;
   private projectiles!: Phaser.Physics.Arcade.Group;
+
+  private spawnDirector!: SpawnDirector;
 
   private lastAttackAt = 0;
   private lastFacing = new Phaser.Math.Vector2(1, 0);
@@ -119,12 +122,47 @@ export class GameScene extends Phaser.Scene {
     // Enemy attacks (cadence) driven from overlap contact
     this.physics.add.overlap(this.player, this.enemies, (_p, e) => this.onEnemyContact(e as Enemy));
 
-    // Spawn loop
-    this.time.addEvent({
-      delay: 1400,
-      loop: true,
-      callback: () => this.spawnEnemy(),
-    });
+    // Spawn director (caps + packs + breathers)
+    this.spawnDirector = new SpawnDirector(
+      {
+        hardCapAlive: 12,
+        softTargetAlive: 8,
+        maxAggressors: 3,
+        packMin: 4,
+        packMax: 6,
+        packSpawnSpanMs: 1100,
+        breatherMs: 4000,
+        ringMin: 112,
+        ringMax: 224,
+        retryCandidates: 8,
+        retryDelayMs: 350,
+        maxConsecutiveFailures: 5,
+      },
+      {
+        getAliveCount: () => this.enemies.countActive(true),
+        spawnEnemyAt: (x, y) => this.spawnEnemyAt(x, y),
+        isSpawnValid: (x, y) => {
+          // off-camera (avoid pop-in)
+          if (this.cameras.main.worldView.contains(x, y)) return false;
+
+          // walkable tile
+          const t = layer.getTileAtWorldXY(x, y, true);
+          if (!t || t.collides) return false;
+
+          // avoid spawning on top of another enemy
+          for (const child of this.enemies.getChildren() as Enemy[]) {
+            if (!child.active) continue;
+            if (Phaser.Math.Distance.Between(x, y, child.x, child.y) < 28) return false;
+          }
+
+          return true;
+        },
+        randInt: (min, max) => Phaser.Math.Between(min, max),
+        randFloat: (min, max) => Phaser.Math.FloatBetween(min, max),
+        now: () => this.time.now,
+      },
+      this.player,
+    );
 
     // HUD
     this.hud = new Hud(this);
@@ -150,6 +188,7 @@ export class GameScene extends Phaser.Scene {
       this.tryAttack();
     }
 
+    this.spawnDirector.update();
     this.updateEnemyAI();
 
     // auto regen tiny (so it's playable)
@@ -294,24 +333,17 @@ export class GameScene extends Phaser.Scene {
     p.destroy();
   }
 
-  private spawnEnemy(): void {
-    const minDist = 340;
+  private spawnEnemyAt(x: number, y: number): Enemy | null {
+    if (x < 40 || y < 40 || x > this.worldW - 40 || y > this.worldH - 40) return null;
 
-    for (let i = 0; i < 12; i++) {
-      const x = Phaser.Math.Between(40, this.worldW - 40);
-      const y = Phaser.Math.Between(40, this.worldH - 40);
-      const d = Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y);
-      if (d < minDist) continue;
-
-      const e = new Enemy(this, x, y, 'kenneySheet', 'ghoul');
-      // Pick a Kenney creature-ish frame (placeholder until we import Tiny Creatures)
-      e.setFrame(24);
-      e.setScale(2);
-      e.setTint(0xffffff);
-      e.setDepth(1);
-      this.enemies.add(e);
-      return;
-    }
+    const e = new Enemy(this, x, y, 'kenneySheet', 'ghoul');
+    // Pick a Kenney creature-ish frame (placeholder until we import Tiny Creatures)
+    e.setFrame(24);
+    e.setScale(2);
+    e.setTint(0xffffff);
+    e.setDepth(1);
+    this.enemies.add(e);
+    return e;
   }
 
   private updateEnemyAI(): void {
