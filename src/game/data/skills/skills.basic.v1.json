@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "resourceKeys": {
+    "stamina": {"displayName": "Stamina"},
+    "mana": {"displayName": "Mana"}
+  },
+  "skills": [
+    {
+      "id": "sk_cleave",
+      "name": "Cleave",
+      "tags": ["melee", "attack"],
+      "minLevel": 1,
+      "cooldownMs": 0,
+      "cost": {"resource": "stamina", "amount": 5},
+      "targeting": {"type": "cone", "range": 32, "angleDeg": 70},
+      "effects": [
+        {"type": "damage", "scalesWith": "weapon", "multiplier": 1.15}
+      ],
+      "notes": "Starter melee builder. Simple weapon-scaling hit in a cone."
+    },
+    {
+      "id": "sk_piercing_shot",
+      "name": "Piercing Shot",
+      "tags": ["ranged", "attack", "projectile"],
+      "minLevel": 1,
+      "cooldownMs": 500,
+      "cost": {"resource": "stamina", "amount": 4},
+      "targeting": {"type": "line", "range": 220},
+      "projectile": {"speed": 420, "pierce": 1, "hitRadius": 8},
+      "effects": [
+        {"type": "damage", "scalesWith": "weapon", "multiplier": 1.0}
+      ],
+      "notes": "Bread-and-butter ranged shot with light pierce."
+    },
+    {
+      "id": "sk_arc_bolt",
+      "name": "Arc Bolt",
+      "tags": ["spell", "projectile", "lightning"],
+      "minLevel": 1,
+      "cooldownMs": 300,
+      "cost": {"resource": "mana", "amount": 6},
+      "targeting": {"type": "line", "range": 200},
+      "projectile": {"speed": 500, "pierce": 0, "hitRadius": 10},
+      "effects": [
+        {"type": "spellDamage", "element": "lightning", "baseMin": 4, "baseMax": 7, "spellPowerScaling": 0.6}
+      ],
+      "notes": "Starter caster nuke. Uses base damage + spell power scaling."
+    }
+  ]
+}

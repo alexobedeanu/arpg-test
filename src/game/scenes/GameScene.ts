@@ -33,8 +33,6 @@ export class GameScene extends Phaser.Scene {
   private loots!: Phaser.Physics.Arcade.Group;
   private projectiles!: Phaser.Physics.Arcade.Group;
 
-  private worldLayer!: Phaser.Tilemaps.TilemapLayer;
-
   private lastAttackAt = 0;
   private lastFacing = new Phaser.Math.Vector2(1, 0);
 
@@ -50,7 +48,6 @@ export class GameScene extends Phaser.Scene {
 
     // World map
     const { layer, width, height } = createProceduralTilemap(this);
-    this.worldLayer = layer;
     this.worldW = width;
     this.worldH = height;
 
@@ -177,13 +174,19 @@ export class GameScene extends Phaser.Scene {
     if (now - this.lastAttackAt < cls.attackCdMs) return;
     this.lastAttackAt = now;
 
+    if (this.currentClass === 'gunslinger') {
+      this.fireGunslingerShot(cls.damage);
+      return;
+    }
+
+    // Melee / short-range AoE
     const dir = this.lastFacing.clone();
     const range = cls.attackRange;
 
     const cx = this.player.x + dir.x * range;
     const cy = this.player.y + dir.y * range;
 
-    const radius = this.currentClass === 'warden' ? 28 : this.currentClass === 'hexbinder' ? 22 : 18;
+    const radius = this.currentClass === 'warden' ? 28 : 22;
 
     // Attack effect
     const fx = this.add.circle(cx, cy, radius, 0xffffff, 0.12).setBlendMode(Phaser.BlendModes.ADD);
@@ -208,6 +211,63 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  private fireGunslingerShot(damage: number): void {
+    // Prefer aiming at mouse cursor if available.
+    const ptr = this.input.activePointer;
+    const aim = new Phaser.Math.Vector2(ptr.worldX - this.player.x, ptr.worldY - this.player.y);
+    const dir = aim.lengthSq() > 32 ? aim.normalize() : this.lastFacing.clone();
+
+    // Spawn just in front of the player so we don't instantly collide with walls.
+    const muzzleDist = 18;
+    const x = this.player.x + dir.x * muzzleDist;
+    const y = this.player.y + dir.y * muzzleDist;
+
+    const speed = 760;
+    const lifeMs = 700;
+
+    const p = new Projectile(this, x, y, 'bullet', { dir, speed, damage, lifeMs });
+    this.projectiles.add(p);
+
+    // Muzzle flash
+    const flash = this.add.circle(x, y, 6, 0xffffff, 0.18).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: flash, scale: 1.8, alpha: 0, duration: 90, onComplete: () => flash.destroy() });
+
+    // Tiny recoil
+    const recoil = dir.clone().scale(-14);
+    (this.player.body as Phaser.Physics.Arcade.Body).velocity.add(recoil);
+  }
+
+  private onProjectileHitEnemy(p: Projectile, e: Enemy): void {
+    if (!p.active || !e.active) return;
+
+    const dead = e.takeDamage(p.damage);
+
+    // Impact VFX
+    const hit = this.add.circle(p.x, p.y, 10, 0xffffff, 0.14).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: hit, scale: 2.2, alpha: 0, duration: 140, onComplete: () => hit.destroy() });
+
+    // Knockback away from projectile travel
+    const body = e.body as Phaser.Physics.Arcade.Body;
+    const kb = new Phaser.Math.Vector2(body.x - p.x, body.y - p.y).normalize().scale(160);
+    body.velocity.add(kb);
+
+    // Brief flash
+    if (!dead) this.tweens.add({ targets: e, alpha: 0.55, yoyo: true, duration: 50, repeat: 1 });
+
+    p.destroy();
+
+    if (dead) this.onEnemyKilled(e);
+  }
+
+  private onProjectileHitWall(p: Projectile): void {
+    if (!p.active) return;
+
+    const spark = this.add.circle(p.x, p.y, 8, 0xffffff, 0.10).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: spark, scale: 2.0, alpha: 0, duration: 120, onComplete: () => spark.destroy() });
+
+    p.destroy();
   }
 
   private spawnEnemy(): void {

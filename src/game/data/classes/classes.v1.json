@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "classes": [
+    {
+      "id": "cls_warrior",
+      "name": "Warrior",
+      "description": "Close-range bruiser with high health and armor.",
+      "startingStats": {"maxHealth": 110, "maxMana": 30, "armor": 4},
+      "startingSkillIds": ["sk_cleave"],
+      "startingItemIds": ["itm_rusty_sword", "itm_iron_buckler", "itm_travelers_boots", "itm_minor_health_potion"],
+      "statGrowthPerLevel": {"maxHealth": 8, "maxMana": 1}
+    },
+    {
+      "id": "cls_ranger",
+      "name": "Ranger",
+      "description": "Mobile ranged attacker with solid evasion.",
+      "startingStats": {"maxHealth": 95, "maxMana": 35, "evasion": 5},
+      "startingSkillIds": ["sk_piercing_shot"],
+      "startingItemIds": ["itm_simple_bow", "itm_leather_vest", "itm_travelers_boots", "itm_minor_health_potion"],
+      "statGrowthPerLevel": {"maxHealth": 6, "maxMana": 2}
+    },
+    {
+      "id": "cls_arcanist",
+      "name": "Arcanist",
+      "description": "Spellcaster with high mana and faster casting.",
+      "startingStats": {"maxHealth": 80, "maxMana": 70, "castSpeedPct": 3},
+      "startingSkillIds": ["sk_arc_bolt"],
+      "startingItemIds": ["itm_apprentice_wand", "itm_tattered_robe", "itm_travelers_boots", "itm_minor_mana_potion"],
+      "statGrowthPerLevel": {"maxHealth": 4, "maxMana": 6}
+    }
+  ]
+}

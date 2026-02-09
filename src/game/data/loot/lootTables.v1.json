@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "notes": "Schema: each table has `rolls` and `entries` with weights. Entries can reference itemIds directly or select by tags with a pick rule. Rarity+affixes are rolled as post-processing.",
+  "rarityRoll": {
+    "common": 0.82,
+    "magic": 0.16,
+    "rare": 0.02
+  },
+  "affixRollByRarity": {
+    "common": {"prefixes": 0, "suffixes": 0},
+    "magic": {"prefixes": [0, 1], "suffixes": [0, 1], "guaranteeAtLeastOne": true},
+    "rare": {"prefixes": [1, 2], "suffixes": [1, 2], "guaranteeAtLeastTwoTotal": true}
+  },
+  "tables": [
+    {
+      "id": "lt_zone_grasslands_t1",
+      "displayName": "Grasslands (Tier 1)",
+      "rolls": [
+        {"type": "drop", "count": [0, 2]}
+      ],
+      "entries": [
+        {
+          "id": "e_potions",
+          "weight": 35,
+          "type": "itemId",
+          "itemIds": ["itm_minor_health_potion", "itm_minor_mana_potion"],
+          "pick": {"mode": "one"}
+        },
+        {
+          "id": "e_starter_weapons",
+          "weight": 30,
+          "type": "itemId",
+          "itemIds": ["itm_rusty_sword", "itm_worn_axe", "itm_simple_bow", "itm_apprentice_wand"],
+          "pick": {"mode": "one"}
+        },
+        {
+          "id": "e_starter_armor",
+          "weight": 35,
+          "type": "itemId",
+          "itemIds": ["itm_iron_buckler", "itm_tattered_robe", "itm_leather_vest", "itm_travelers_boots"],
+          "pick": {"mode": "one"}
+        }
+      ]
+    },
+    {
+      "id": "lt_enemy_bandit_t1",
+      "displayName": "Bandit (Tier 1)",
+      "rolls": [{"type": "drop", "count": [0, 1]}],
+      "entries": [
+        {"id": "e_coin_like_value", "weight": 70, "type": "nothing"},
+        {"id": "e_potion", "weight": 15, "type": "itemId", "itemIds": ["itm_minor_health_potion"], "pick": {"mode": "one"}},
+        {"id": "e_any_starter", "weight": 15, "type": "tableRef", "tableId": "lt_zone_grasslands_t1", "pick": {"mode": "oneEntry"}}
+      ]
+    }
+  ]
+}

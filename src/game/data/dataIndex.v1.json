@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "bundles": [
+    {
+      "id": "core_v1",
+      "files": [
+        "affixes/affixes.v1.json",
+        "items/items.starter.v1.json",
+        "skills/skills.basic.v1.json",
+        "classes/classes.v1.json",
+        "loot/lootTables.v1.json"
+      ]
+    }
+  ]
+}

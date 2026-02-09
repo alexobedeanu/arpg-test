@@ -32,7 +32,8 @@ export class Projectile extends Phaser.Physics.Arcade.Image {
     body.setAllowGravity(false);
 
     // Small, fast-moving projectile: use a slightly larger body for reliability.
-    body.setCircle(4, -1, -1);
+    // Texture is ~10x4.
+    body.setCircle(4, 1, 0);
 
     const dir = opts.dir.clone();
     if (dir.lengthSq() < 0.0001) dir.set(1, 0);
@@ -46,9 +47,7 @@ export class Projectile extends Phaser.Physics.Arcade.Image {
     this.bornAt = scene.time.now;
   }
 
-  preUpdate(time: number, delta: number): void {
-    super.preUpdate(time, delta);
-
+  update(time: number, _delta: number): void {
     if (time - this.bornAt > this.lifeMs) {
       this.destroy();
       return;
