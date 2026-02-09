@@ -174,13 +174,18 @@ export class GameScene extends Phaser.Scene {
     if (now - this.lastAttackAt < cls.attackCdMs) return;
     this.lastAttackAt = now;
 
+    // Aim direction: mouse if meaningful, otherwise lastFacing.
+    const ptr = this.input.activePointer;
+    const aim = new Phaser.Math.Vector2(ptr.worldX - this.player.x, ptr.worldY - this.player.y);
+    const dir = aim.lengthSq() > 32 ? aim.normalize() : this.lastFacing.clone();
+    this.lastFacing.copy(dir);
+
     if (this.currentClass === 'gunslinger') {
-      this.fireGunslingerShot(cls.damage);
+      this.fireGunslingerShot(cls.damage, dir);
       return;
     }
 
     // Melee / short-range AoE
-    const dir = this.lastFacing.clone();
     const range = cls.attackRange;
 
     const cx = this.player.x + dir.x * range;
@@ -213,11 +218,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private fireGunslingerShot(damage: number): void {
-    // Prefer aiming at mouse cursor if available.
-    const ptr = this.input.activePointer;
-    const aim = new Phaser.Math.Vector2(ptr.worldX - this.player.x, ptr.worldY - this.player.y);
-    const dir = aim.lengthSq() > 32 ? aim.normalize() : this.lastFacing.clone();
+  private fireGunslingerShot(damage: number, dir: Phaser.Math.Vector2): void {
 
     // Spawn just in front of the player so we don't instantly collide with walls.
     const muzzleDist = 18;
