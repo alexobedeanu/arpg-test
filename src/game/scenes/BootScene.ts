@@ -7,7 +7,9 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     // Kenney Tiny Dungeon (CC0)
-    this.load.image('kenneyTiles', '/assets/kenney/tiny-dungeon/Tilemap/tilemap_packed.png');
+    const url = '/assets/kenney/tiny-dungeon/Tilemap/tilemap_packed.png';
+    this.load.image('kenneyTilesImg', url);
+    this.load.spritesheet('kenneySheet', url, { frameWidth: 16, frameHeight: 16 });
   }
 
   create(): void {

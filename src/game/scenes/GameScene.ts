@@ -75,12 +75,20 @@ export class GameScene extends Phaser.Scene {
     };
     this.attackKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    // Player
-    this.player = this.physics.add.sprite(160, 160, 'player');
+    // Player (Kenney sprite)
+    this.player = this.physics.add.sprite(160, 160, 'kenneySheet', 96);
+    this.player.setScale(2);
     this.player.setDamping(true);
     this.player.setDrag(1100, 1100);
     this.player.setMaxVelocity(520, 520);
     this.player.setCollideWorldBounds(true);
+
+    // Shadow
+    const shadow = this.add.ellipse(this.player.x, this.player.y + 18, 26, 10, 0x000000, 0.25);
+    shadow.setDepth(0);
+    this.events.on('postupdate', () => {
+      shadow.setPosition(this.player.x, this.player.y + 18);
+    });
 
     // Camera & bounds
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH);
@@ -294,8 +302,11 @@ export class GameScene extends Phaser.Scene {
       const d = Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y);
       if (d < minDist) continue;
 
-      const e = new Enemy(this, x, y, 'enemy', 'ghoul');
-      e.setTint(0xf97316);
+      const e = new Enemy(this, x, y, 'kenneySheet', 'ghoul');
+      // Pick a Kenney creature-ish frame (placeholder until we import Tiny Creatures)
+      e.setFrame(24);
+      e.setScale(2);
+      e.setTint(0xffffff);
       e.setDepth(1);
       this.enemies.add(e);
       return;

@@ -44,7 +44,7 @@ export function createProceduralTilemap(scene: Phaser.Scene, opts?: { width?: nu
 
   // Create tilemap from array
   const map = scene.make.tilemap({ data, tileWidth: tileSize, tileHeight: tileSize });
-  const tileset = map.addTilesetImage('kenneyTiles', 'kenneyTiles', tileSize, tileSize, 0, 0);
+  const tileset = map.addTilesetImage('kenneyTilesImg', 'kenneyTilesImg', tileSize, tileSize, 0, 0);
   if (!tileset) throw new Error('Failed to create tileset');
 
   const layer = map.createLayer(0, tileset, 0, 0);
