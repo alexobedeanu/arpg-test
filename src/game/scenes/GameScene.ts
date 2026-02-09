@@ -6,6 +6,11 @@ import { Inventory } from '../systems/Inventory';
 import { Hud } from '../ui/Hud';
 import { ensureTextures } from '../assets/generateTextures';
 import { createProceduralTilemap } from '../world/tilemap';
+import { pickWeighted } from '../systems/loot';
+
+import classesData from '../data/classes/classes.v1.json';
+import itemsData from '../data/items/items.starter.v1.json';
+import lootData from '../data/loot/lootTables.v1.json';
 
 type PlayerClass = 'warden' | 'hexbinder' | 'gunslinger';
 
@@ -14,6 +19,11 @@ const CLASSES: Record<PlayerClass, { name: string; color: number; speed: number;
   hexbinder: { name: 'Hexbinder', color: 0xa78bfa, speed: 195, damage: 5, attackRange: 72, attackCdMs: 260 },
   gunslinger: { name: 'Gunslinger', color: 0x60a5fa, speed: 205, damage: 4, attackRange: 90, attackCdMs: 180 },
 };
+
+type LootDrop =
+  | { kind: 'gold'; amount: number }
+  | { kind: 'rune'; amount: number }
+  | { kind: 'item'; amount: number; itemId: string };
 
 export class GameScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -25,6 +35,9 @@ export class GameScene extends Phaser.Scene {
 
   private hp = 30;
   private hpMax = 30;
+
+  private enemyLootTableId = 'lt_enemy_bandit_t1';
+  private itemsById = new Map<string, { id: string; name: string }>();
 
   private hud!: Hud;
   private inventory = new Inventory();
@@ -45,6 +58,7 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     ensureTextures(this);
+    this.bootstrapData();
 
     // World map
     const { layer, width, height } = createProceduralTilemap(this);
@@ -312,21 +326,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onEnemyKilled(e: Enemy): void {
-    // Spawn loot
-    const roll = Phaser.Math.Between(1, 100);
-    const kind: LootKind = roll <= 75 ? 'gold' : 'rune';
-    const amount = kind === 'gold' ? Phaser.Math.Between(3, 12) : 1;
-
-    const lootTex = kind === 'gold' ? 'lootGold' : 'lootRune';
-    const l = new Loot(this, e.x, e.y, lootTex, kind, amount);
-    l.setDepth(2);
-
-    // toss a bit
-    const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-    const v = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle)).scale(120);
-    (l.body as Phaser.Physics.Arcade.Body).setVelocity(v.x, v.y);
-
-    this.loots.add(l);
+    // Spawn loot (data-driven table first, fallback to simple currency)
+    const drops = this.rollLootTable(this.enemyLootTableId);
+    if (drops.length === 0) {
+      const kind: LootKind = Phaser.Math.Between(1, 100) <= 75 ? 'gold' : 'rune';
+      const amount = kind === 'gold' ? Phaser.Math.Between(3, 12) : 1;
+      this.spawnLoot(e.x, e.y, kind, amount);
+    } else {
+      for (const d of drops) {
+        if (d.kind === 'gold' || d.kind === 'rune') this.spawnLoot(e.x, e.y, d.kind, d.amount);
+        if (d.kind === 'item') this.spawnItemLoot(e.x, e.y, d.itemId);
+      }
+    }
 
     // Death effect
     const puff = this.add.circle(e.x, e.y, 18, 0xffffff, 0.08).setBlendMode(Phaser.BlendModes.ADD);
@@ -337,19 +348,101 @@ export class GameScene extends Phaser.Scene {
 
   private onPickup(l: Loot): void {
     if (!l.active) return;
+
     if (l.kind === 'gold') this.inventory.addGold(l.amount);
     if (l.kind === 'rune') this.inventory.addRune(l.amount);
+    if (l.kind === 'item' && l.itemId) this.inventory.addItem(l.itemId, l.amount);
 
     this.hud.setInventory(this.inventory.snapshot());
 
-    const t = this.add.text(l.x, l.y - 8, l.kind === 'gold' ? `+${l.amount}g` : '+rune', {
+    const label = l.kind === 'gold'
+      ? `+${l.amount}g`
+      : l.kind === 'rune'
+        ? '+rune'
+        : `+${l.itemName ?? l.itemId}`;
+
+    const color = l.kind === 'gold' ? '#fde68a' : l.kind === 'rune' ? '#bfdbfe' : '#e5e7eb';
+
+    const t = this.add.text(l.x, l.y - 8, label, {
       fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif',
       fontSize: '12px',
-      color: l.kind === 'gold' ? '#fde68a' : '#bfdbfe',
+      color,
     });
-    this.tweens.add({ targets: t, y: t.y - 18, alpha: 0, duration: 550, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: t, y: t.y - 18, alpha: 0, duration: 650, onComplete: () => t.destroy() });
 
     l.destroy();
+  }
+
+  private bootstrapData(): void {
+    // Items lookup (for tooltips/pickups)
+    for (const it of (itemsData as any).items as Array<{ id: string; name: string }>) {
+      this.itemsById.set(it.id, { id: it.id, name: it.name });
+    }
+
+    // Apply a real starting class to HP/Inventory (no UI yet; pick Ranger by default)
+    const cls = (classesData as any).classes?.find((c: any) => c.id === 'cls_ranger') ?? (classesData as any).classes?.[0];
+    if (cls?.startingStats?.maxHealth) {
+      this.hpMax = cls.startingStats.maxHealth;
+      this.hp = this.hpMax;
+    }
+    if (Array.isArray(cls?.startingItemIds)) {
+      for (const id of cls.startingItemIds) this.inventory.addItem(id, 1);
+    }
+  }
+
+  private spawnLoot(x: number, y: number, kind: LootKind, amount: number): void {
+    const lootTex = kind === 'gold' ? 'lootGold' : 'lootRune';
+    const l = new Loot(this, x, y, lootTex, kind, amount);
+    l.setDepth(2);
+    const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    const v = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle)).scale(120);
+    (l.body as Phaser.Physics.Arcade.Body).setVelocity(v.x, v.y);
+    this.loots.add(l);
+  }
+
+  private spawnItemLoot(x: number, y: number, itemId: string): void {
+    // For now use rune sprite for items; later replace with real item icons.
+    const meta = this.itemsById.get(itemId);
+    const l = new Loot(this, x, y, 'lootRune', 'item', 1, { itemId, itemName: meta?.name });
+    l.setTint(0xe5e7eb);
+    l.setDepth(2);
+    const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    const v = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle)).scale(120);
+    (l.body as Phaser.Physics.Arcade.Body).setVelocity(v.x, v.y);
+    this.loots.add(l);
+  }
+
+  private rollLootTable(tableId: string): LootDrop[] {
+    const tables = (lootData as any).tables as any[];
+    const table = tables?.find((t) => t.id === tableId);
+    if (!table) return [];
+
+    const rolls = table.rolls?.[0]?.count as [number, number] | undefined;
+    const n = rolls ? Phaser.Math.Between(rolls[0], rolls[1]) : 0;
+    if (n <= 0) return [];
+
+    const entries = (table.entries as any[]).map((e) => ({ weight: e.weight ?? 0, value: e }));
+    const out: LootDrop[] = [];
+
+    for (let i = 0; i < n; i++) {
+      const chosen = pickWeighted(entries, () => Math.random());
+      if (chosen.type === 'nothing') continue;
+      if (chosen.type === 'itemId') {
+        const ids: string[] = chosen.itemIds ?? [];
+        if (ids.length === 0) continue;
+        const itemId = ids[Phaser.Math.Between(0, ids.length - 1)];
+        out.push({ kind: 'item', amount: 1, itemId });
+        continue;
+      }
+      if (chosen.type === 'tableRef') {
+        const innerId: string | undefined = chosen.tableId;
+        if (!innerId) continue;
+        out.push(...this.rollLootTable(innerId));
+        continue;
+      }
+    }
+
+    return out;
   }
 
   private lastHurtAt = 0;

@@ -35,7 +35,9 @@ export class Hud {
   }
 
   setInventory(inv: InventoryState): void {
-    this.invText.setText(`Loot:  🪙 ${inv.gold}   ◇ ${inv.runes}`);
+    const hpots = inv.items['itm_minor_health_potion'] ?? 0;
+    const mpots = inv.items['itm_minor_mana_potion'] ?? 0;
+    this.invText.setText(`Loot: 🪙 ${inv.gold}  ◇ ${inv.runes}  🧪H ${hpots}  🧪M ${mpots}`);
   }
 
   destroy(): void {
