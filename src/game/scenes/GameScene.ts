@@ -35,6 +35,7 @@ export class GameScene extends Phaser.Scene {
 
   private hp = 30;
   private hpMax = 30;
+  private invulnUntil = 0;
 
   private enemyLootTableId = 'lt_enemy_bandit_t1';
   private itemsById = new Map<string, { id: string; name: string }>();
@@ -115,8 +116,8 @@ export class GameScene extends Phaser.Scene {
     // Pick up loot
     this.physics.add.overlap(this.player, this.loots, (_p, l) => this.onPickup(l as Loot));
 
-    // Damage player on contact
-    this.physics.add.overlap(this.player, this.enemies, (_p, e) => this.onPlayerHit(e as Enemy));
+    // Enemy attacks (cadence) driven from overlap contact
+    this.physics.add.overlap(this.player, this.enemies, (_p, e) => this.onEnemyContact(e as Enemy));
 
     // Spawn loop
     this.time.addEvent({
@@ -456,17 +457,56 @@ export class GameScene extends Phaser.Scene {
     return out;
   }
 
-  private lastHurtAt = 0;
-  private onPlayerHit(e: Enemy): void {
+  private onEnemyContact(e: Enemy): void {
     const now = this.time.now;
-    if (now - this.lastHurtAt < 500) return;
-    this.lastHurtAt = now;
+    if (now < this.invulnUntil) return;
 
-    this.hp = Math.max(0, this.hp - e.damage);
+    const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y);
+
+    // Start windup when close enough.
+    if (dist <= e.attack.range && e.canStartAttack(now)) {
+      e.startAttack(now);
+      // simple telegraph
+      this.tweens.add({ targets: e, alpha: 0.65, yoyo: true, duration: e.attack.windupMs });
+      return;
+    }
+
+    // Resolve the hit when windup completes and still in range.
+    if (dist <= e.attack.range && e.consumeAttackIfReady(now)) {
+      this.applyPlayerDamage(e.damage, new Phaser.Math.Vector2(this.player.x - e.x, this.player.y - e.y));
+    }
+  }
+
+  private applyPlayerDamage(amount: number, fromDir: Phaser.Math.Vector2): void {
+    const now = this.time.now;
+
+    this.hp = Math.max(0, this.hp - amount);
     this.hud.setHP(this.hp, this.hpMax);
 
+    // i-frames
+    this.invulnUntil = now + 650;
+
+    // Knockback
+    const dir = fromDir.lengthSq() > 0.001 ? fromDir.normalize() : new Phaser.Math.Vector2(1, 0);
+    const kb = dir.scale(220);
+    (this.player.body as Phaser.Physics.Arcade.Body).velocity.add(kb);
+
+    // Hitstop (tiny)
+    this.time.timeScale = 0.0001;
+    this.tweens.add({
+      targets: this.time,
+      props: {},
+      duration: 50,
+      onComplete: () => {
+        this.time.timeScale = 1;
+      },
+    });
+
     // screen shake
-    this.cameras.main.shake(80, 0.004);
+    this.cameras.main.shake(110, 0.006);
+
+    // flash
+    this.tweens.add({ targets: this.player, alpha: 0.35, yoyo: true, duration: 70, repeat: 2 });
 
     if (this.hp <= 0) {
       this.hp = this.hpMax;

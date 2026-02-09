@@ -9,6 +9,10 @@ lerna-debug.log*
 
 node_modules
 dist
+
+# Local artifacts
+screenshot.png
+tools/
 dist-ssr
 *.local
 
